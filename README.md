@@ -23,9 +23,13 @@ cd licensing_tool
 
 ## Usage Mode 1: Install the Plugin from the ZIP
 
+### For users
+
 An installable plugin ZIP is already available in:
 
 - `/build/distributions/`
+
+### For developers
 
 If you need to rebuild it, run:
 
