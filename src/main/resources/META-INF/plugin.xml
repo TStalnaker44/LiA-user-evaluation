@@ -1,0 +1,50 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.example.my_plugin</id>
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>LiA</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor url="https://www.yourcompany.com">YourCompany</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description>
+        <![CDATA[
+    LiA (Licensing Assistant) helps developers analyze project licenses, dependencies, and compliance issues directly inside IntelliJ IDEA.
+  ]]>
+    </description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="Licensing Tool" displayType="BALLOON"/>
+        <projectService
+            serviceInterface="com.example.my_plugin.MavenDependencyService"
+            serviceImplementation="com.example.my_plugin.MavenDependencyServiceImpl"/>
+        <toolWindow id="Licensing Assistant"
+                    anchor="right"
+                    icon="/icons/toolWindowIcon.svg"
+                    factoryClass="com.example.my_plugin.MyToolWindowFactory"
+                    secondary="true"/>
+        <postStartupActivity implementation="com.example.my_plugin.ProjectStartupActivity"/>
+    </extensions>
+    <projectListeners>
+        <listener class="com.example.my_plugin.ProjectListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+        <listener class="com.example.my_plugin.PomChangeProjectListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    </projectListeners>
+    <!--<actions>
+        <action id="com.example.my_plugin.OpenTextFieldAction" class="com.example.my_plugin.OpenTextFieldAction"
+                text="Open Chatbot" description="Opens the chat window">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+    </actions>-->
+</idea-plugin>

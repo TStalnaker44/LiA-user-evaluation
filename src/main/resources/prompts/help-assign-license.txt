@@ -1,0 +1,18 @@
+Help me assign a suitable project license.
+
+Use the current Licensing Configuration questionnaire and the dependency summary already available for this project.
+
+Requirements:
+- Recommend only license options that appear compatible with the known dependency licenses.
+- Make sure your answer is compliant with the dependency licenses already in use.
+- Base the recommendation on the user's stated goals and constraints from the Licensing Configuration.
+- If the project is currently unlicensed or marked as unassigned, propose one to three realistic options and explain the tradeoffs briefly.
+- If the project is marked as proprietary/commercial, explain what can be inferred from the current dependencies and ask only the minimum clarifying questions needed before suggesting next steps.
+- If some dependency licenses are unknown, say that verification is still needed before a final choice is made.
+- Distinguish clearly between facts from the available context and uncertainty.
+
+Answer in concise, user-friendly English using these headings:
+Recommendation
+Why it fits
+Dependency compatibility
+Open questions
