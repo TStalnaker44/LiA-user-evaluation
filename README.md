@@ -25,7 +25,7 @@ cd licensing_tool
 
 An installable plugin ZIP is already available in:
 
-- `/build/distributions/`
+- `/Users/danielebifolco/IdeaProjects/licensing_tool/build/distributions/`
 
 If you need to rebuild it, run:
 

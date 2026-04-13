@@ -371,8 +371,7 @@ public final class MavenDependencyServiceImpl implements MavenDependencyService,
             indicator.setText("Diffing SBOM");
         }
         if (currSbom == null) {
-            // If the current SBOM generation fails, show an error message and return null.
-            notifyError("Dependency Analysis Error", "Failed to generate SBOM files.");
+            // genSbom already logs and notifies the specific failure reason.
             LOG.error("Failed to generate SBOM files. Current SBOM is null.");
             UsageLogger.INSTANCE.logInteraction(project, null, "dependency_diff_failed", eventData("reason", "curr_sbom_null"));
             return new JsonObject(); // Return an empty JSON object if no changes are detected.
@@ -804,14 +803,43 @@ public final class MavenDependencyServiceImpl implements MavenDependencyService,
             throw cancelled;
         } catch (Exception e){
             LOG.error("Error analyzing dependencies: " + e.getMessage());
+            String reason = sbomFailureReason(e);
+            String userMessage = sbomFailureUserMessage(e);
+            notifyError("SBOM Generation Failed", userMessage);
             UsageLogger.INSTANCE.logInteraction(project, null, "sbom_generation_failed", eventData(
                     "changedPomPath", changedPomPath,
+                    "reason", reason,
                     "error", e.getMessage(),
                     "durationMs", System.currentTimeMillis() - startedAtMs
             ));
             return new File[] {null, null};
         }
         return new File[] {prevSbomFile, newSbomFile};
+    }
+
+    private String sbomFailureReason(Exception e) {
+        if (e instanceof CycloneDxMavenInvoker.MavenExecutionException) {
+            return ((CycloneDxMavenInvoker.MavenExecutionException) e).getReason();
+        }
+        String message = e.getMessage() == null ? "" : e.getMessage().toLowerCase(Locale.ROOT);
+        if (message.contains("cannot run program") || message.contains("no such file") || message.contains("not found")) {
+            return "maven_not_found";
+        }
+        if (message.contains("timed out")) {
+            return "sbom_timeout";
+        }
+        return "sbom_generation_error";
+    }
+
+    private String sbomFailureUserMessage(Exception e) {
+        String reason = sbomFailureReason(e);
+        return switch (reason) {
+            case "maven_not_found" -> "Maven was not found or could not be started. Install Maven, add it to PATH, configure MAVEN_HOME/M2_HOME, or add a Maven wrapper (mvnw) to the project.";
+            case "sbom_timeout" -> "SBOM generation timed out. Check that Maven can resolve project dependencies, or increase the timeout if the project is slow to build.";
+            case "maven_command_failed" -> "Maven failed while generating the SBOM. Check the Maven output, project pom.xml, dependency resolution, and network access.";
+            case "sbom_missing" -> "Maven completed, but LiA could not find the generated bom.xml file.";
+            default -> "LiA could not generate the SBOM: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+        };
     }
 
     private Map<String, Object> eventData(Object... keyValues) {

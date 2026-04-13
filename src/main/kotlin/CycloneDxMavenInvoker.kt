@@ -15,6 +15,12 @@ import java.util.concurrent.TimeUnit
 object CycloneDxMavenInvoker {
     private val LOG = LogInitializer.getLogger(CycloneDxMavenInvoker::class.java)
 
+    class MavenExecutionException(
+        message: String,
+        val reason: String,
+        cause: Throwable? = null
+    ) : RuntimeException(message, cause)
+
     fun generateSbom(mavenProjectDir: File, outputDir: String): File =
         generateSbom(mavenProjectDir, outputDir, null)
 
@@ -37,7 +43,15 @@ object CycloneDxMavenInvoker {
 
         val outputLines = mutableListOf<String>()
         val outputBuilder = StringBuilder()
-        val handler = OSProcessHandler(cmd)
+        val handler = try {
+            OSProcessHandler(cmd)
+        } catch (t: Throwable) {
+            throw MavenExecutionException(
+                "Maven was not found or could not be started. Install Maven, add it to PATH, configure MAVEN_HOME/M2_HOME, or add a Maven wrapper (mvnw) to the project.",
+                "maven_not_found",
+                t
+            )
+        }
         val process = handler.process
         handler.addProcessListener(object : ProcessAdapter() {
             override fun onTextAvailable(event: ProcessEvent, outputType: com.intellij.openapi.util.Key<*>) {
@@ -57,7 +71,10 @@ object CycloneDxMavenInvoker {
                 indicator?.checkCanceled()
                 if (System.currentTimeMillis() > deadline) {
                     handler.destroyProcess()
-                    throw RuntimeException("SBOM generation timed out.\n${outputBuilder.toString().trim()}")
+                    throw MavenExecutionException(
+                        "SBOM generation timed out after ${timeoutMs / 1000} seconds.\n${outputBuilder.toString().trim()}",
+                        "sbom_timeout"
+                    )
                 }
                 process.waitFor(200, TimeUnit.MILLISECONDS)
             }
@@ -79,7 +96,10 @@ object CycloneDxMavenInvoker {
         }
         if (exitCode != 0) {
             LOG.error("Maven SBOM generation failed with exit code " + exitCode)
-            throw RuntimeException("Error during the generation of the SBOM:\n${outputBuilder.toString().trim()}")
+            throw MavenExecutionException(
+                "Maven failed while generating the SBOM (exit code $exitCode).\n${outputBuilder.toString().trim()}",
+                "maven_command_failed"
+            )
         }
 
         var bomFilePath: String? = null
@@ -133,7 +153,7 @@ object CycloneDxMavenInvoker {
         }
         if (!bomFile.exists()) {
             LOG.warn("bom.xml not found after the generation: $bomFilePath")
-            throw RuntimeException("SBOM not found after generation.")
+            throw MavenExecutionException("SBOM not found after generation.", "sbom_missing")
         }
 
         LOG.info("✅ SBOM generated: ${bomFile.absolutePath}")

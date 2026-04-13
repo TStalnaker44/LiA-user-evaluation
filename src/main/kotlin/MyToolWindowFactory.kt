@@ -1752,6 +1752,7 @@ class MyToolWindowFactory : ToolWindowFactory {
 
         UsageLogger.logEvent(project, userId, "tool_opened", mapOf("toolWindow" to "LiA"))
         UsageLogger.logInteraction(project, userId, "tool_window_opened", mapOf("toolWindow" to "LiA"))
+        PrerequisiteChecker.run(project, "tool_window_opened")
 
         // Post-init greeting and gating submit button by survey presence
         val surveyJson = java.io.File(project.basePath, ".license-tool/license-survey.json")

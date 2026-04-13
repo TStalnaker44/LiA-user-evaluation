@@ -30,7 +30,15 @@ object MavenDependencyTreeInvoker {
             .withRedirectErrorStream(true)
 
         val output = StringBuilder()
-        val handler = OSProcessHandler(command)
+        val handler = try {
+            OSProcessHandler(command)
+        } catch (t: Throwable) {
+            throw CycloneDxMavenInvoker.MavenExecutionException(
+                "Maven was not found or could not be started while generating the dependency tree.",
+                "maven_not_found",
+                t
+            )
+        }
         val process = handler.process
         handler.addProcessListener(object : ProcessAdapter() {
             override fun onTextAvailable(event: ProcessEvent, outputType: com.intellij.openapi.util.Key<*>) {
@@ -46,7 +54,10 @@ object MavenDependencyTreeInvoker {
                 indicator?.checkCanceled()
                 if (System.currentTimeMillis() > deadline) {
                     handler.destroyProcess()
-                    throw RuntimeException("Dependency tree generation timed out.\n${output.toString().trim()}")
+                    throw CycloneDxMavenInvoker.MavenExecutionException(
+                        "Dependency tree generation timed out after ${timeoutMs / 1000} seconds.\n${output.toString().trim()}",
+                        "dependency_tree_timeout"
+                    )
                 }
                 process.waitFor(200, TimeUnit.MILLISECONDS)
             }
@@ -62,10 +73,16 @@ object MavenDependencyTreeInvoker {
         }
         if (exitCode != 0) {
             LOG.error("Maven dependency:tree failed with exit code $exitCode")
-            throw RuntimeException("Error during dependency tree generation.\n${output.toString().trim()}")
+            throw CycloneDxMavenInvoker.MavenExecutionException(
+                "Maven dependency:tree failed (exit code $exitCode).\n${output.toString().trim()}",
+                "dependency_tree_command_failed"
+            )
         }
         if (!outputFile.exists()) {
-            throw RuntimeException("Dependency tree output file was not created: ${outputFile.absolutePath}")
+            throw CycloneDxMavenInvoker.MavenExecutionException(
+                "Dependency tree output file was not created: ${outputFile.absolutePath}",
+                "dependency_tree_missing"
+            )
         }
         return outputFile
     }

@@ -88,12 +88,29 @@ class ProjectStartupActivity : ProjectActivity {
                                         LOG.info("Triggering SBOM generation on project open for: ${project.name}")
                                         UsageLogger.logInteraction(project, null, "startup_sbom_started")
                                         indicator.isIndeterminate = true
-                                        svc.genSbom(indicator)
+                                        val sbomFiles = svc.genSbom(indicator)
+                                        val currentSbom = sbomFiles.getOrNull(1)
+                                        if (currentSbom == null) {
+                                            UsageLogger.logInteraction(
+                                                project,
+                                                null,
+                                                "startup_sbom_failed",
+                                                mapOf(
+                                                    "reason" to "curr_sbom_null",
+                                                    "durationMs" to (System.currentTimeMillis() - startedAtMs)
+                                                )
+                                            )
+                                            LOG.warn("Startup SBOM generation returned no current SBOM file.")
+                                            return
+                                        }
                                         UsageLogger.logInteraction(
                                             project,
                                             null,
                                             "startup_sbom_completed",
-                                            mapOf("durationMs" to (System.currentTimeMillis() - startedAtMs))
+                                            mapOf(
+                                                "path" to currentSbom.absolutePath,
+                                                "durationMs" to (System.currentTimeMillis() - startedAtMs)
+                                            )
                                         )
                                     } else {
                                         LOG.warn("MavenDependencyService not available on project: ${project.name}")
