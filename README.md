@@ -17,7 +17,7 @@ Optional:
 ## Project Setup
 
 ```sh
-git clone https://github.com/nwintersgill/licensing_tool.git
+git clone https://github.com/TStalnaker44/LiA-user-evaluation.git
 cd licensing_tool
 ```
 
@@ -26,16 +26,6 @@ cd licensing_tool
 An installable plugin ZIP is already available in:
 
 - `/Users/danielebifolco/IdeaProjects/licensing_tool/build/distributions/`
-
-If you need to rebuild it, run:
-
-```sh
-bash ./gradlew buildPlugin
-```
-
-The generated archive is:
-
-- `/Users/danielebifolco/IdeaProjects/licensing_tool/build/distributions/licensetool-x.x.zip`
 
 Install it in IntelliJ IDEA:
 
@@ -55,6 +45,18 @@ After installation:
    - Ollama models require a reachable Ollama host
 4. Complete the `Licensing Configuration`
 5. Optionally use `Help Assign License` if the project is currently unlicensed or the intended license is still undecided
+
+### Building the zip folder
+
+If you need to rebuild the zip folder, run the following command:
+
+```sh
+bash ./gradlew buildPlugin
+```
+
+The generated archive can be found at:
+
+- `/build/distributions/licensetool-x.x.zip`
 
 ## Usage Mode 2: Run the Plugin in a Sandbox
 
